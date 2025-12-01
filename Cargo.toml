@@ -1,0 +1,15 @@
+[workspace]
+resolver = "3"
+members = [
+    "day01"
+]
+
+[workspace.dependencies]
+
+[workspace.lints.rust]
+rust_2018_idioms = "warn"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
