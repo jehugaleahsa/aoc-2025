@@ -29,12 +29,12 @@ impl Error for AdventError {}
 
 fn main() -> Result<(), AdventError> {
     let path = Path::new("resources/input.txt");
-    first_part(&path)?;
-    second_part(&path)?;
+    run_first_part(&path)?;
+    run_second_part(&path)?;
     Ok(())
 }
 
-fn first_part(path: &Path) -> Result<(), AdventError> {
+fn run_first_part(path: &Path) -> Result<(), AdventError> {
     let file = File::open(path).map_err(|_| AdventError::new("Failed to open the file"))?;
     let reader = BufReader::new(file);
 
@@ -55,7 +55,7 @@ fn first_part(path: &Path) -> Result<(), AdventError> {
     Ok(())
 }
 
-fn second_part(path: &Path) -> Result<(), AdventError> {
+fn run_second_part(path: &Path) -> Result<(), AdventError> {
     let file = File::open(path).map_err(|_| AdventError::new("Failed to open the file"))?;
     let reader = BufReader::new(file);
 
