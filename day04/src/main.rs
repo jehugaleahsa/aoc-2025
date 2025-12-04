@@ -138,6 +138,10 @@ fn read_roll_lines(path: &Path) -> Result<Vec<Vec<bool>>, AdventError> {
         return Err(AdventError::new("Could not open the input file"));
     };
     let reader = BufReader::new(file);
+    read_roll_lines_direct(reader)
+}
+
+fn read_roll_lines_direct<R: BufRead>(reader: R) -> Result<Vec<Vec<bool>>, AdventError> {
     let mut rolls = Vec::new();
     for line in reader.lines() {
         let Ok(line) = line else {
@@ -159,7 +163,10 @@ fn read_roll_lines(path: &Path) -> Result<Vec<Vec<bool>>, AdventError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{count_accessible_rolls, count_accessible_rolls_repeatedly};
+    use crate::{
+        count_accessible_rolls, count_accessible_rolls_repeatedly, read_roll_lines_direct,
+    };
+    use std::io::Cursor;
 
     #[test]
     fn test_part1_example() {
@@ -186,15 +193,7 @@ mod tests {
 @.@@@.@@@@
 .@@@@@@@@.
 @.@.@@@.@.";
-        let mut rolls = Vec::new();
-        for line in raw_data.lines() {
-            let mut roll_line = Vec::new();
-            for char in line.chars() {
-                let is_roll = char == '@';
-                roll_line.push(is_roll);
-            }
-            rolls.push(roll_line);
-        }
-        rolls
+        let cursor = Cursor::new(raw_data);
+        read_roll_lines_direct(cursor).unwrap()
     }
 }
