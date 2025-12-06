@@ -1,31 +1,7 @@
-use std::error::Error;
-use std::fmt::{Display, Formatter};
+use shared::AdventError;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-
-#[derive(Debug)]
-struct AdventError {
-    message: String,
-}
-
-impl AdventError {
-    #[inline]
-    #[must_use]
-    pub fn new(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
-    }
-}
-
-impl Display for AdventError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error for AdventError {}
 
 fn main() -> Result<(), AdventError> {
     let path = Path::new("day02/resources/input.txt");
