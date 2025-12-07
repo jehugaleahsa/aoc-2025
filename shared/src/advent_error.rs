@@ -23,3 +23,5 @@ impl Display for AdventError {
 }
 
 impl Error for AdventError {}
+
+pub type Result<T> = std::result::Result<T, AdventError>;
