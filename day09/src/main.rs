@@ -33,6 +33,7 @@ fn run_part1(path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)] // Part 2 incomplete
 fn run_part2(path: &Path) -> Result<()> {
     let Ok(file) = File::open(path) else {
         return Err(AdventError::new("Could not open the input file"));
