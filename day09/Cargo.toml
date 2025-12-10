@@ -1,0 +1,11 @@
+[package]
+name = "day09"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+shared = { path = "../shared" }
+rayon = { version = "1.11.0" }
+
+[lints]
+workspace = true
