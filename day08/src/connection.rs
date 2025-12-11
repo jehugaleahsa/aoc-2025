@@ -9,15 +9,14 @@ pub struct Connection {
 impl Connection {
     #[must_use]
     pub fn distance(&self) -> f64 {
-        let x_diff = self.second.x as f64 - self.first.x as f64;
-        let y_diff = self.second.y as f64 - self.first.y as f64;
-        let z_diff = self.second.z as f64 - self.first.z as f64;
+        let x_diff = f64::from(self.second.x) - f64::from(self.first.x);
+        let y_diff = f64::from(self.second.y) - f64::from(self.first.y);
+        let z_diff = f64::from(self.second.z) - f64::from(self.first.z);
         let x_squared = x_diff * x_diff;
         let y_squared = y_diff * y_diff;
         let z_squared = z_diff * z_diff;
         let sum = x_squared + y_squared + z_squared;
-        let square_root = sum.sqrt();
-        square_root
+        sum.sqrt()
     }
 }
 

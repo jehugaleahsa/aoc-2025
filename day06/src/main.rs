@@ -48,19 +48,17 @@ fn read_columns_direct<R: BufRead>(reader: R) -> Result<Vec<Column>, AdventError
                     return Err(AdventError::new("Encountered an invalid operator"));
                 };
                 column.operator = operator;
+            } else if let Ok(number) = value.parse::<i64>() {
+                column.values.push(number);
+            } else if index == 0
+                && let Some(operator) = Operator::parse_str(value)
+            {
+                is_operators = true;
+                column.operator = operator;
             } else {
-                if let Ok(number) = value.parse::<i64>() {
-                    column.values.push(number);
-                } else if index == 0
-                    && let Some(operator) = Operator::parse_str(value)
-                {
-                    is_operators = true;
-                    column.operator = operator;
-                } else {
-                    return Err(AdventError::new(
-                        "Encountered an invalid number or operator",
-                    ));
-                }
+                return Err(AdventError::new(
+                    "Encountered an invalid number or operator",
+                ));
             }
         }
     }
@@ -141,7 +139,10 @@ fn read_columns_hard_direct<R: BufRead>(reader: R) -> Result<Vec<Column>, Advent
     for index in 0..chunk_ranges.len() {
         let range = chunk_ranges[index].clone();
         let operator = operators[index];
-        let mut column = Column::default();
+        let mut column = Column {
+            operator,
+            ..Column::default()
+        };
         column.operator = operator;
         column.values.resize(range.len(), 0);
         for line in lines.iter().take(lines.len() - 1) {
@@ -154,7 +155,7 @@ fn read_columns_hard_direct<R: BufRead>(reader: R) -> Result<Vec<Column>, Advent
                         return Err(AdventError::new("Encountered an invalid number"));
                     };
                     *value *= 10;
-                    *value += parsed_value as i64;
+                    *value += i64::from(parsed_value);
                 }
             }
         }

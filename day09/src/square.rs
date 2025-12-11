@@ -16,10 +16,9 @@ impl Square {
     #[inline]
     #[must_use]
     pub fn area(&self) -> u64 {
-        let width = (self.first.x as i64 - self.second.x as i64).unsigned_abs() + 1;
-        let height = (self.first.y as i64 - self.second.y as i64).unsigned_abs() + 1;
-        let area = width * height;
-        area
+        let width = (i64::from(self.first.x) - i64::from(self.second.x)).unsigned_abs() + 1;
+        let height = (i64::from(self.first.y) - i64::from(self.second.y)).unsigned_abs() + 1;
+        width * height
     }
 }
 

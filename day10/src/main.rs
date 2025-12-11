@@ -141,7 +141,7 @@ fn find_minimal_button_pressed_for_joltages_breadth_first(schematic: &Schematic)
             let mut joltages = configuration.joltages.clone();
             let ordering = schematic.press_button_for_joltages(button_index, &mut joltages);
             match ordering {
-                Ordering::Greater => continue,
+                Ordering::Greater => {}
                 Ordering::Equal => return Some(next_depth),
                 Ordering::Less => {
                     let distance = compute_distance(schematic, &joltages);
@@ -196,7 +196,7 @@ fn find_minimal_button_pressed_for_joltages_depth_first(schematic: &Schematic) -
             let mut joltages = configuration.joltages.clone();
             let ordering = schematic.press_button_for_joltages(button_index, &mut joltages);
             match ordering {
-                Ordering::Greater => continue,
+                Ordering::Greater => {}
                 Ordering::Equal => {
                     if let Some(current_minimum) = running_minimum {
                         if current_minimum > next_depth {

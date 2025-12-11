@@ -25,7 +25,6 @@ impl Circuit {
     }
 
     #[inline]
-    #[must_use]
     pub fn junctions(&self) -> impl Iterator<Item = &Junction> {
         self.junctions.iter()
     }

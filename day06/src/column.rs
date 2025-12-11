@@ -19,8 +19,8 @@ impl Column {
     #[must_use]
     pub fn fold(&self) -> i64 {
         match self.operator {
-            Operator::Add => self.values.iter().fold(0, |x, y| x + y),
-            Operator::Multiply => self.values.iter().fold(1, |x, y| x * y),
+            Operator::Add => self.values.iter().sum::<i64>(),
+            Operator::Multiply => self.values.iter().product::<i64>(),
         }
     }
 }

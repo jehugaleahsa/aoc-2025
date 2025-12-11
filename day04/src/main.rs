@@ -11,16 +11,13 @@ fn main() -> Result<(), AdventError> {
 }
 
 fn run_first_part(path: &Path) -> Result<(), AdventError> {
-    let rolls = match read_roll_lines(path) {
-        Ok(rolls) => rolls,
-        Err(e) => return Err(e),
-    };
+    let rolls = read_roll_lines(path)?;
     let accessible_rolls = count_accessible_rolls(&rolls);
     println!("Part 1 - There are {accessible_rolls} accessible roll(s)");
     Ok(())
 }
 
-fn count_accessible_rolls(rolls: &Vec<Vec<bool>>) -> u32 {
+fn count_accessible_rolls(rolls: &[Vec<bool>]) -> u32 {
     let mut accessible_rolls = 0u32;
     for (row_index, row) in rolls.iter().enumerate() {
         for (column_index, column) in row.iter().enumerate() {
@@ -37,19 +34,16 @@ fn count_accessible_rolls(rolls: &Vec<Vec<bool>>) -> u32 {
 }
 
 fn run_second_part(path: &Path) -> Result<(), AdventError> {
-    let mut rolls = match read_roll_lines(path) {
-        Ok(rolls) => rolls,
-        Err(e) => return Err(e),
-    };
+    let mut rolls = read_roll_lines(path)?;
     let moved_rolls = count_accessible_rolls_repeatedly(&mut rolls);
     println!("Part 2 - There are {moved_rolls} moved roll(s)");
     Ok(())
 }
 
-fn count_accessible_rolls_repeatedly(rolls: &mut Vec<Vec<bool>>) -> usize {
+fn count_accessible_rolls_repeatedly(rolls: &mut [Vec<bool>]) -> usize {
     let mut moved_rolls = 0usize;
     loop {
-        let accessible_rolls = find_accessible_rolls(&rolls);
+        let accessible_rolls = find_accessible_rolls(rolls);
         let accessible_roll_count = accessible_rolls.len();
         if accessible_roll_count == 0 {
             break;
@@ -62,7 +56,7 @@ fn count_accessible_rolls_repeatedly(rolls: &mut Vec<Vec<bool>>) -> usize {
     moved_rolls
 }
 
-fn find_accessible_rolls(rolls: &Vec<Vec<bool>>) -> Vec<(usize, usize)> {
+fn find_accessible_rolls(rolls: &[Vec<bool>]) -> Vec<(usize, usize)> {
     let mut accessible_rolls = Vec::new();
     for (row_index, row) in rolls.iter().enumerate() {
         for (column_index, column) in row.iter().enumerate() {
@@ -78,7 +72,7 @@ fn find_accessible_rolls(rolls: &Vec<Vec<bool>>) -> Vec<(usize, usize)> {
     accessible_rolls
 }
 
-fn count_adjacent_rolls(rolls: &Vec<Vec<bool>>, row_index: usize, column_index: usize) -> u32 {
+fn count_adjacent_rolls(rolls: &[Vec<bool>], row_index: usize, column_index: usize) -> u32 {
     let row = &rolls[row_index];
     let mut occupied_count = 0u32;
     let start_row = row_index as isize - 1;

@@ -56,7 +56,7 @@ fn run_second_part(path: &Path) -> Result<(), AdventError> {
     Ok(())
 }
 
-fn extract_start_end(buffer: &Vec<u8>) -> Result<(i64, i64), AdventError> {
+fn extract_start_end(buffer: &[u8]) -> Result<(i64, i64), AdventError> {
     let split: Vec<&[u8]> = buffer.splitn(2, |b| *b == b'-').collect();
     if split.len() != 2 {
         return Err(AdventError::new("A range did not contain 2 parts"));
@@ -65,7 +65,7 @@ fn extract_start_end(buffer: &Vec<u8>) -> Result<(i64, i64), AdventError> {
         .map_err(|_| AdventError::new("The start of the range was not a valid string"))?;
     let end = str::from_utf8(split[1])
         .map_err(|_| AdventError::new("The end of the range was not a valid string"))?;
-    let end = end.trim_end_matches(|x| x == ',' || x == '\r' || x == '\n');
+    let end = end.trim_end_matches([',', '\r', '\n']);
     let start = start.parse().map_err(|_| {
         AdventError::new(format!(
             "The start of the range was not a valid integer: {start}"
@@ -101,7 +101,7 @@ fn total_invalid_ids_part_2(start: i64, end: i64) -> Result<u64, AdventError> {
         let chars: Vec<char> = value.to_string().chars().collect();
         let mid = chars.len() / 2;
         for chunk_size in (1..=mid).rev() {
-            if chars.len() % chunk_size != 0 {
+            if !chars.len().is_multiple_of(chunk_size) {
                 continue;
             }
             let chunks_1 = chars.chunks(chunk_size);
@@ -160,13 +160,17 @@ mod tests {
     #[test]
     fn test_part1_1188511880_1188511890() {
         let total = total_invalid_ids(1_188_511_880, 1_188_511_890).unwrap();
-        assert_eq!(11885_11885, total);
+        #[allow(clippy::large_digit_groups)] {
+            assert_eq!(11885_11885, total);
+        }
     }
 
     #[test]
     fn test_part2_1188511880_1188511890() {
         let total = total_invalid_ids_part_2(1_188_511_880, 1_188_511_890).unwrap();
-        assert_eq!(11885_11885, total);
+        #[allow(clippy::large_digit_groups)] {
+            assert_eq!(11885_11885, total);
+        }
     }
 
     #[test]
@@ -178,7 +182,9 @@ mod tests {
     #[test]
     fn test_part2_222220_222224() {
         let total = total_invalid_ids_part_2(222_220, 222_224).unwrap();
-        assert_eq!(222222, total); // Multiple valid splits... counted only once!
+        #[allow(clippy::unreadable_literal)] {
+            assert_eq!(222222, total); // Multiple valid splits... counted only once!
+        }
     }
 
     #[test]

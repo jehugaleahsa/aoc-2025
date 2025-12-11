@@ -5,8 +5,8 @@ use std::path::Path;
 
 fn main() -> Result<(), AdventError> {
     let path = Path::new("resources/input.txt");
-    run_first_part(&path)?;
-    run_second_part(&path)?;
+    run_first_part(path)?;
+    run_second_part(path)?;
     Ok(())
 }
 
@@ -18,7 +18,7 @@ fn run_first_part(path: &Path) -> Result<(), AdventError> {
     let mut value = 50i32;
     for line in reader.lines() {
         let line = line.map_err(|_| AdventError::new("Failed to read the next line"))?;
-        let amount = parse_amount(line)?;
+        let amount = parse_amount(&line)?;
         value += amount;
         value %= 100;
         if value == 0 {
@@ -39,7 +39,7 @@ fn run_second_part(path: &Path) -> Result<(), AdventError> {
     let mut value = 50i32;
     for line in reader.lines() {
         let line = line.map_err(|_| AdventError::new("Failed to read the next line"))?;
-        let amount = parse_amount(line)?;
+        let amount = parse_amount(&line)?;
 
         let mut full_rotations = amount / 100;
         if full_rotations < 0 {
@@ -67,7 +67,7 @@ fn run_second_part(path: &Path) -> Result<(), AdventError> {
     Ok(())
 }
 
-fn parse_amount(line: String) -> Result<i32, AdventError> {
+fn parse_amount(line: &str) -> Result<i32, AdventError> {
     let (direction, rest) = line
         .split_at_checked(1)
         .ok_or_else(|| AdventError::new("Encountered an invalid rotation"))?;

@@ -72,7 +72,7 @@ fn process_line_part_1(line: &str) -> Result<u64, AdventError> {
     }
     let sub_total = top_values
         .into_iter()
-        .map(|x| u64::from(x))
+        .map(u64::from)
         .fold(0, |acc, next| acc * 10 + next);
     Ok(sub_total)
 }
@@ -120,7 +120,7 @@ fn process_line_part_2(line: &str, battery_count: usize) -> Result<u64, AdventEr
                 }
             }
             _ => {
-                return Err(AdventError::new(format!(
+                Err(AdventError::new(format!(
                     "Encountered more than {battery_count} top value(s)."
                 )))?;
             }
@@ -133,7 +133,7 @@ fn process_line_part_2(line: &str, battery_count: usize) -> Result<u64, AdventEr
     }
     let sub_total = top_values
         .into_iter()
-        .map(|x| u64::from(x))
+        .map(u64::from)
         .fold(0, |acc, next| acc * 10 + next);
     Ok(sub_total)
 }

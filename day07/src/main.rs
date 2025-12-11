@@ -26,13 +26,13 @@ fn run_part_1(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn count_splits(lines: &Vec<Vec<State>>) -> u32 {
+fn count_splits(lines: &[Vec<State>]) -> u32 {
     let Some(mut current_line) = lines.first().cloned() else {
         return 0;
     };
     let mut total_splits = 0u32;
     for next_index in 1..lines.len() {
-        let mut next_line: Vec<State> = lines[next_index].iter().cloned().collect();
+        let mut next_line: Vec<State> = lines[next_index].clone();
         for state_index in 0..current_line.len() {
             let state = current_line[state_index];
             match state {
@@ -88,7 +88,7 @@ fn count_timelines(lines: &Vec<Vec<State>>) -> u64 {
     };
     let beam_index = current_line
         .iter()
-        .cloned()
+        .copied()
         .enumerate()
         .filter(|(_, s)| *s == State::Start)
         .map(|(ix, _)| ix)
@@ -110,7 +110,7 @@ fn count_alternate_timeline_splits(
         return 0;
     };
     if let Some(total) = cache.get(&(current_index, beam_index)) {
-        return total.clone();
+        return *total;
     }
     let state = current_line[beam_index];
     let count = match state {

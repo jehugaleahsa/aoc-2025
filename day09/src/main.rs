@@ -47,9 +47,9 @@ fn run_part2(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn find_largest_square(tiles: &Vec<Tile>, bounded: bool) -> Option<Square> {
-    let marked = mark_valid_tiles(&tiles)?;
-    let mut squares = create_squares(&tiles, bounded);
+fn find_largest_square(tiles: &[Tile], bounded: bool) -> Option<Square> {
+    let marked = mark_valid_tiles(tiles)?;
+    let mut squares = create_squares(tiles, bounded);
     let square_count = squares.len();
     sort_squares_by_area_desc(&mut squares);
     squares
@@ -76,9 +76,9 @@ fn run_part2_rayon(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn find_largest_square_rayon(tiles: &Vec<Tile>, bounded: bool) -> Option<Square> {
-    let marked = mark_valid_tiles(&tiles)?;
-    let squares = create_squares(&tiles, bounded);
+fn find_largest_square_rayon(tiles: &[Tile], bounded: bool) -> Option<Square> {
+    let marked = mark_valid_tiles(tiles)?;
+    let squares = create_squares(tiles, bounded);
     //let squares: Vec<Square> = squares
     //.into_iter()
     //.filter(|s| {
@@ -98,10 +98,7 @@ fn find_largest_square_rayon(tiles: &Vec<Tile>, bounded: bool) -> Option<Square>
                 let old = done.fetch_add(1, Ordering::Relaxed);
                 let percent_complete = old as f32 / square_count as f32;
                 let area = s.area();
-                println!(
-                    "Attempting {} of {square_count} - area {} - {}",
-                    i, area, percent_complete
-                );
+                println!("Attempting {i} of {square_count} - area {area} - {percent_complete}");
                 let result = all_valid_tiles(s, &marked);
                 if result {
                     largest.fetch_max(area, Ordering::Relaxed);
@@ -113,7 +110,7 @@ fn find_largest_square_rayon(tiles: &Vec<Tile>, bounded: bool) -> Option<Square>
             .map(|p| p.1),
     );
     sort_squares_by_area_desc(&mut valid_squares);
-    valid_squares.first().cloned()
+    valid_squares.first().copied()
 }
 
 fn all_valid_tiles(square: &Square, marked_tiles: &MarkedTiles) -> bool {
@@ -131,10 +128,8 @@ fn all_valid_tiles(square: &Square, marked_tiles: &MarkedTiles) -> bool {
     true
 }
 
-fn mark_valid_tiles(tiles: &Vec<Tile>) -> Option<MarkedTiles> {
-    let Some(first) = tiles.first() else {
-        return None;
-    };
+fn mark_valid_tiles(tiles: &[Tile]) -> Option<MarkedTiles> {
+    let first = tiles.first()?;
     let min_x = tiles
         .iter()
         .map(|t| t.x)
@@ -158,7 +153,7 @@ fn mark_valid_tiles(tiles: &Vec<Tile>) -> Option<MarkedTiles> {
     let mut marked_tiles = MarkedTiles::new(min_x, max_x, min_y, max_y);
 
     // Draw the outline
-    let nexts = tiles.iter().skip(1).chain(vec![first].into_iter());
+    let nexts = tiles.iter().skip(1).chain(vec![first]);
     let pairs = tiles.iter().zip(nexts);
     for (first, second) in pairs {
         if first.x == second.x {
@@ -185,7 +180,7 @@ fn mark_valid_tiles(tiles: &Vec<Tile>) -> Option<MarkedTiles> {
         let mut start_x = None;
         let mut end_x = None;
         y_count += 1;
-        if y_count % 1_000 == 0 {
+        if y_count.is_multiple_of(1_000) {
             println!("{y}");
         }
         for x in min_x..=max_x {
@@ -214,7 +209,7 @@ fn mark_valid_tiles(tiles: &Vec<Tile>) -> Option<MarkedTiles> {
     Some(marked_tiles)
 }
 
-fn create_squares(tiles: &Vec<Tile>, bounded: bool) -> Vec<Square> {
+fn create_squares(tiles: &[Tile], bounded: bool) -> Vec<Square> {
     let mut squares = Vec::new();
     for outer_index in 0..tiles.len() {
         let previous_index = if outer_index == 0 {
@@ -230,7 +225,7 @@ fn create_squares(tiles: &Vec<Tile>, bounded: bool) -> Vec<Square> {
         let outer_tile = tiles[outer_index];
         let previous_tile = tiles[previous_index];
         let next_tile = tiles[next_index];
-        if is_top_left_corner(&outer_tile, &previous_tile, &next_tile) {
+        if is_top_left_corner(outer_tile, previous_tile, next_tile) {
             for inner_index in 0..tiles.len() {
                 if inner_index != outer_index {
                     let inner_tile = tiles[inner_index];
@@ -245,7 +240,7 @@ fn create_squares(tiles: &Vec<Tile>, bounded: bool) -> Vec<Square> {
                     }
                 }
             }
-        } else if is_bottom_left_corner(&outer_tile, &previous_tile, &next_tile) {
+        } else if is_bottom_left_corner(outer_tile, previous_tile, next_tile) {
             for inner_index in (outer_index + 1)..tiles.len() {
                 if inner_index != outer_index {
                     let inner_tile = tiles[inner_index];
@@ -265,16 +260,16 @@ fn create_squares(tiles: &Vec<Tile>, bounded: bool) -> Vec<Square> {
     squares
 }
 
-fn is_top_left_corner(current: &Tile, previous: &Tile, next: &Tile) -> bool {
+fn is_top_left_corner(current: Tile, previous: Tile, next: Tile) -> bool {
     current.y == next.y && previous.x == current.x && current.x <= next.x && current.y <= previous.y
 }
 
-fn is_bottom_left_corner(current: &Tile, previous: &Tile, next: &Tile) -> bool {
+fn is_bottom_left_corner(current: Tile, previous: Tile, next: Tile) -> bool {
     next.x == current.x && current.y == previous.y && current.x <= previous.x && current.y >= next.y
 }
 
-fn sort_squares_by_area_desc(squares: &mut Vec<Square>) {
-    squares.sort_by(|a, b| a.area().partial_cmp(&b.area()).unwrap().reverse())
+fn sort_squares_by_area_desc(squares: &mut [Square]) {
+    squares.sort_by(|a, b| a.area().partial_cmp(&b.area()).unwrap().reverse());
 }
 
 fn parse_tiles<R: BufRead>(reader: R) -> Result<Vec<Tile>> {
@@ -332,7 +327,7 @@ mod tests {
         let current = Tile::from_x_y(0, 0);
         let next = Tile::from_x_y(10, 0);
         let previous = Tile::from_x_y(0, 10);
-        let result = is_top_left_corner(&current, &previous, &next);
+        let result = is_top_left_corner(current, previous, next);
         assert!(result);
     }
 
@@ -341,7 +336,7 @@ mod tests {
         let previous = Tile::from_x_y(0, 0);
         let current = Tile::from_x_y(10, 0);
         let next = Tile::from_x_y(10, 10);
-        let result = is_top_left_corner(&current, &previous, &next);
+        let result = is_top_left_corner(current, previous, next);
         assert!(!result);
     }
 
@@ -350,7 +345,7 @@ mod tests {
         let current = Tile::from_x_y(0, 10);
         let next = Tile::from_x_y(0, 0);
         let previous = Tile::from_x_y(10, 10);
-        let result = is_bottom_left_corner(&current, &previous, &next);
+        let result = is_bottom_left_corner(current, previous, next);
         assert!(result);
     }
 
@@ -359,7 +354,7 @@ mod tests {
         let next = Tile::from_x_y(0, 10);
         let current = Tile::from_x_y(10, 10);
         let previous = Tile::from_x_y(10, 0);
-        let result = is_bottom_left_corner(&current, &previous, &next);
+        let result = is_bottom_left_corner(current, previous, next);
         assert!(!result);
     }
 

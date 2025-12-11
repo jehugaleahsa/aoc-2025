@@ -61,9 +61,8 @@ fn read_ingredients_direct<R: BufRead>(
                 if include_available_ids {
                     is_available_section = true;
                     continue;
-                } else {
-                    break;
                 }
+                break;
             }
             let fresh_range = parse_fresh_range(line)?;
             fresh_ranges.push(fresh_range);
@@ -86,10 +85,10 @@ fn parse_fresh_range(line: &str) -> Result<FreshRange, AdventError> {
     Ok(range)
 }
 
-fn count_fresh_ingredients(fresh_ranges: &Vec<FreshRange>, available_ids: &Vec<u64>) -> u64 {
+fn count_fresh_ingredients(fresh_ranges: &[FreshRange], available_ids: &Vec<u64>) -> u64 {
     let mut fresh_count = 0u64;
     for available_id in available_ids {
-        for fresh_range in fresh_ranges.iter() {
+        for fresh_range in fresh_ranges {
             if fresh_range.contains(*available_id) {
                 fresh_count += 1;
                 break;
@@ -99,7 +98,7 @@ fn count_fresh_ingredients(fresh_ranges: &Vec<FreshRange>, available_ids: &Vec<u
     fresh_count
 }
 
-fn count_all_fresh_ingredients(fresh_ranges: &Vec<FreshRange>) -> u64 {
+fn count_all_fresh_ingredients(fresh_ranges: &[FreshRange]) -> u64 {
     let merged_ranges = merge_ranges(fresh_ranges);
     let mut fresh_count = 0u64;
     for fresh_range in merged_ranges {
@@ -108,7 +107,7 @@ fn count_all_fresh_ingredients(fresh_ranges: &Vec<FreshRange>) -> u64 {
     fresh_count
 }
 
-fn merge_ranges(fresh_range: &Vec<FreshRange>) -> Vec<FreshRange> {
+fn merge_ranges(fresh_range: &[FreshRange]) -> Vec<FreshRange> {
     let mut merged_ranges = Vec::new();
     let mut removed = vec![false; fresh_range.len()];
     for (index, range) in fresh_range.iter().enumerate() {
@@ -154,7 +153,7 @@ mod tests {
         let cursor = create_example_cursor();
         let (ranges, ids) = read_ingredients_direct(cursor, true).unwrap();
         let fresh_count = count_fresh_ingredients(&ranges, &ids);
-        assert_eq!(3, fresh_count)
+        assert_eq!(3, fresh_count);
     }
 
     #[test]
@@ -162,11 +161,11 @@ mod tests {
         let cursor = create_example_cursor();
         let (ranges, _) = read_ingredients_direct(cursor, false).unwrap();
         let fresh_count = count_all_fresh_ingredients(&ranges);
-        assert_eq!(14, fresh_count)
+        assert_eq!(14, fresh_count);
     }
 
     fn create_example_cursor() -> Cursor<&'static str> {
-        const EXAMPLE_INPUT: &str = r#"3-5
+        const EXAMPLE_INPUT: &str = r"3-5
 10-14
 16-20
 12-18
@@ -177,7 +176,7 @@ mod tests {
 11
 17
 32
-"#;
+";
         Cursor::new(EXAMPLE_INPUT)
     }
 }

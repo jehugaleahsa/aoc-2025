@@ -87,23 +87,20 @@ fn parse_junctions<R: BufRead>(reader: R) -> Result<Vec<Junction>> {
     Ok(junctions)
 }
 
-fn create_combinations(junctions: &Vec<Junction>) -> Vec<Connection> {
+fn create_combinations(junctions: &[Junction]) -> Vec<Connection> {
     let mut connections = Vec::new();
     for outer_index in 0..junctions.len() {
         let first = junctions[outer_index];
         for inner_index in (outer_index + 1)..junctions.len() {
             let second = junctions[inner_index];
-            let connection = Connection {
-                first: first.clone(),
-                second: second.clone(),
-            };
+            let connection = Connection { first, second };
             connections.push(connection);
         }
     }
     connections
 }
 
-fn sort_combinations(connection: &mut Vec<Connection>) {
+fn sort_combinations(connection: &mut [Connection]) {
     connection.sort_by(|a, b| {
         let a_distance = a.distance();
         let b_distance = b.distance();
@@ -112,7 +109,7 @@ fn sort_combinations(connection: &mut Vec<Connection>) {
 }
 
 fn connect_combinations(
-    combinations: &Vec<Connection>,
+    combinations: &[Connection],
     max_connections: usize,
     part2: bool,
     total_junctions: usize,
@@ -136,23 +133,27 @@ fn connect_combinations(
             }
             (Some(first_circuit), None) => {
                 first_circuit.borrow_mut().add(combination.second);
-                junction_circuits.insert(combination.second, Rc::clone(&first_circuit));
+                junction_circuits.insert(combination.second, Rc::clone(first_circuit));
             }
             (None, Some(second_circuit)) => {
                 second_circuit.borrow_mut().add(combination.first);
-                junction_circuits.insert(combination.first, Rc::clone(&second_circuit));
+                junction_circuits.insert(combination.first, Rc::clone(second_circuit));
             }
             (Some(first_circuit), Some(second_circuit)) => {
                 if first_circuit.as_ptr() != second_circuit.as_ptr() {
-                    unique_circuits.remove(&(first_circuit.borrow().deref() as *const Circuit));
-                    unique_circuits.remove(&(second_circuit.borrow().deref() as *const Circuit));
+                    unique_circuits.remove(&std::ptr::from_ref::<Circuit>(
+                        first_circuit.borrow().deref(),
+                    ));
+                    unique_circuits.remove(&std::ptr::from_ref::<Circuit>(
+                        second_circuit.borrow().deref(),
+                    ));
 
                     let new_circuit = first_circuit
                         .borrow()
                         .merge(second_circuit.borrow().deref());
                     let new_circuit = Rc::new(RefCell::new(new_circuit));
                     for junction in new_circuit.borrow().junctions() {
-                        junction_circuits.insert(junction.clone(), Rc::clone(&new_circuit));
+                        junction_circuits.insert(*junction, Rc::clone(&new_circuit));
                     }
                     unique_circuits.insert(new_circuit.as_ptr(), new_circuit);
                 }
@@ -171,7 +172,7 @@ fn connect_combinations(
     unique_circuits.into_values().collect()
 }
 
-fn sort_circuits_by_total_connections(circuits: &mut Vec<Rc<RefCell<Circuit>>>) {
+fn sort_circuits_by_total_connections(circuits: &mut [Rc<RefCell<Circuit>>]) {
     circuits.sort_by(|a, b| a.borrow().len().cmp(&b.borrow().len()).reverse());
 }
 
