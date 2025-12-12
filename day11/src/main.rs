@@ -57,27 +57,34 @@ fn parse_connections<R: BufRead>(reader: R) -> Result<Vec<Connection>> {
     Ok(all_connections)
 }
 
-fn count_paths(connections: &[Connection], start: &str, stop: &str) -> u32 {
+fn count_paths(connections: &[Connection], start: &str, stop: &str) -> u64 {
     let lookup = build_connection_lookup(connections);
     let start = find_key(&lookup, start);
     let stop = find_key(&lookup, stop);
-    count_possibilities(&lookup, &start, &stop)
+    let mut counts = HashMap::new();
+    count_possibilities(&lookup, &start, &stop, &mut counts)
 }
 
 fn count_possibilities(
     lookup: &HashMap<Rc<String>, HashSet<Rc<String>>>,
     start: &Rc<String>,
     stop: &Rc<String>,
-) -> u32 {
+    counts: &mut HashMap<Rc<String>, u64>,
+) -> u64 {
     if start == stop {
+        counts.insert(Rc::clone(start), 1);
         return 1;
+    }
+    if let Some(count) = counts.get(start) {
+        return *count;
     }
     let mut count = 0;
     if let Some(outputs) = lookup.get(start) {
         for output in outputs {
-            count += count_possibilities(lookup, output, stop);
+            count += count_possibilities(lookup, output, stop, counts);
         }
     }
+    counts.insert(Rc::clone(start), count);
     count
 }
 
@@ -86,46 +93,104 @@ fn count_paths_with_requirements(
     start: &str,
     stop: &str,
     requirements: &HashSet<Rc<String>>,
-) -> u32 {
+) -> u64 {
     if start == stop {
         return 0; // We didn't visit the required machines
     }
-    let mut cache = HashMap::new();
-    let mut dead_ends = HashMap::new();
     let start = find_key(lookup, start);
     let stop = find_key(lookup, stop);
+    let mut counts = HashMap::new();
+    count_possibilities(lookup, &start, &stop, &mut counts);
+    let mut with_requirements = HashSet::new();
+    find_machines_with_requirements(lookup, &start, &stop, requirements, &mut with_requirements);
+    let mut cache = HashMap::new();
     let mut count = 0;
     if let Some(outputs) = lookup.get(&start) {
         for output in outputs {
             let mut remaining = requirements.clone();
+            remaining.remove(&start);
             let mut path = Vec::new();
-            path.push(Rc::clone(&start));
+            //path.push(Rc::clone(&start));
+            let mut visited = HashSet::new();
+            visited.insert(Rc::clone(&start));
             count += count_possibilities_with_requirements(
                 lookup,
                 &mut cache,
-                &mut dead_ends,
+                &counts,
                 &mut remaining,
                 output,
-                &Rc::clone(&stop),
+                &stop,
                 &mut path,
+                &mut visited,
+                &with_requirements,
             );
         }
     }
     count
 }
 
+fn find_machines_with_requirements(
+    lookup: &HashMap<Rc<String>, HashSet<Rc<String>>>,
+    start: &Rc<String>,
+    stop: &Rc<String>,
+    requirements: &HashSet<Rc<String>>,
+    with_requirements: &mut HashSet<Rc<String>>,
+) -> bool {
+    if with_requirements.contains(start) {
+        return true;
+    }
+    let mut result = false;
+    if requirements.contains(start) {
+        result = true;
+    }
+    if start != stop
+        && let Some(children) = lookup.get(start)
+    {
+        for child in children {
+            if find_machines_with_requirements(lookup, child, stop, requirements, with_requirements)
+            {
+                result = true;
+            }
+        }
+    }
+    if result {
+        with_requirements.insert(Rc::clone(start));
+    }
+    result
+}
+
 fn count_possibilities_with_requirements(
     lookup: &HashMap<Rc<String>, HashSet<Rc<String>>>,
     requirements_cache: &mut HashMap<Rc<String>, HashMap<Rc<String>, HashSet<Rc<String>>>>,
-    dead_ends: &mut HashMap<Rc<String>, HashSet<Rc<String>>>,
+    counts: &HashMap<Rc<String>, u64>,
     remaining: &mut HashSet<Rc<String>>,
     start: &Rc<String>,
     stop: &Rc<String>,
     path: &mut Vec<Rc<String>>,
-) -> u32 {
-    path.push(Rc::clone(start));
+    visited: &mut HashSet<Rc<String>>,
+    with_requirements: &HashSet<Rc<String>>,
+) -> u64 {
+    //path.push(Rc::clone(start));
+    let removed = remaining.remove(start);
     if start == stop {
-        return u32::from(remaining.is_empty());
+        if removed {
+            remaining.insert(Rc::clone(start));
+        }
+        return u64::from(remaining.is_empty());
+    }
+    if remaining.is_empty()
+        && let Some(count) = counts.get(start)
+    {
+        if removed {
+            remaining.insert(Rc::clone(start));
+        }
+        return *count;
+    }
+    if !remaining.is_empty() && !with_requirements.contains(start) {
+        if removed {
+            remaining.insert(Rc::clone(start));
+        }
+        return 0; // No point in searching further down... no children have any requirements.
     }
     if let Some(parent_cache) = requirements_cache.get(start) {
         // We avoid looking at the rest of the machines by keeping
@@ -146,31 +211,29 @@ fn count_possibilities_with_requirements(
                     return 0;
                 }
             }
-            return happy_children.len() as u32;
+            return happy_children.len() as u64;
         }
         return 0;
     }
-    let removed = remaining.remove(start);
+    if !visited.insert(Rc::clone(start)) {
+        return 0; // Cyclic!
+    }
     let mut count = 0;
     if let Some(outputs) = lookup.get(start) {
         for output in outputs {
-            let child_count = if let Some(dead_end_children) = dead_ends.get(start)
-                && dead_end_children.contains(output)
-            {
-                0
-            } else {
-                count_possibilities_with_requirements(
-                    lookup,
-                    requirements_cache,
-                    dead_ends,
-                    remaining,
-                    output,
-                    stop,
-                    path,
-                )
-            };
+            let child_count = count_possibilities_with_requirements(
+                lookup,
+                requirements_cache,
+                counts,
+                remaining,
+                output,
+                stop,
+                path,
+                visited,
+                with_requirements,
+            );
             count += child_count;
-            path.pop();
+            //path.pop();
 
             // If our child or one of its children reached the destination, we want to track
             // which requirements were missing at this point. Since our children found the
@@ -189,25 +252,13 @@ fn count_possibilities_with_requirements(
                         register_child_count(child_lookup, remaining, output);
                     }
                 }
-            } else if remaining.is_empty() {
-                let entry = dead_ends.entry(Rc::clone(start));
-                match entry {
-                    Vacant(entry) => {
-                        let mut dead_end_children = HashSet::new();
-                        dead_end_children.insert(Rc::clone(output));
-                        entry.insert(dead_end_children);
-                    }
-                    Occupied(mut entry) => {
-                        let dead_end_children = entry.get_mut();
-                        dead_end_children.insert(Rc::clone(output));
-                    }
-                }
             }
         }
     }
     if removed {
         remaining.insert(Rc::clone(start));
     }
+    visited.remove(start);
     count
 }
 
